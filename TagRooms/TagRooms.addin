@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+	<AddIn Type="Command">
+		<Assembly>"D:\Saves\TestRevitApps\TagRooms.dll"</Assembly>
+		<AddInId>3ADDE410-FFE5-4C43-B7B6-47D31DACA593</AddInId>
+		<FullClassName>TagRooms.Main</FullClassName>
+		<VendorId>ADSK</VendorId>
+		<Text>Маркировка помещений</Text>
+	</AddIn>
+</RevitAddIns>

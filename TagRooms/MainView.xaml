@@ -1,0 +1,77 @@
+﻿<Window x:Class="TagRooms.MainView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TagRooms"
+             mc:Ignorable="d" 
+             Height="330" Width="500" Background="#FFF0F0F0"
+             ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition MinHeight="150"/>
+            <RowDefinition Height="Auto" MinHeight="30"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Label Content="Уровень:" Margin="3" Padding="3"/>
+        <Label Content="Тип марки:" Margin="3" Padding="3" Grid.Row="1"/>
+        <ComboBox Grid.Column="1" 
+                  ItemsSource="{Binding Levels}"
+                  SelectedValue="{Binding SelectedLevels}"
+                  DisplayMemberPath="Name"
+                  Margin="40,5,5,5"/>
+        <ComboBox Grid.Column="1"
+                  Grid.Row="1"
+                  ItemsSource="{Binding TagType}"
+                  SelectedValue="{Binding SelectedTagType}"
+                  DisplayMemberPath="Name"
+                  Margin="40,5,5,5"/>
+        <ListView Grid.Row="2" 
+                  Grid.ColumnSpan="3"
+                  Margin="5" Name="roomsData"/>
+        <Button Grid.Column="2"
+                Grid.Row="3"
+                Content="ОК"               
+                Width="75"                
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top" 
+                Margin="0,5,90,0"/>
+        <Button Content="Отмена"
+                Grid.Column="2"
+                HorizontalAlignment="Left"                
+                Grid.Row="3"
+                VerticalAlignment="Top"
+                Width="75" 
+                Margin="125,5,0,0"/>
+        <Button Content="Разместить помещения"
+                Command="{Binding PlaceSpace}"
+                Grid.Column="2"
+                HorizontalAlignment="Center"
+                Margin="5"
+                Padding="3"
+                VerticalAlignment="Center"
+                Width="140"/>
+        <Button Content="Маркировать ВСЁ"
+                Command="{Binding PlaceTagRoom}"
+                Grid.Column="2"
+                HorizontalAlignment="Center"
+                Margin="5"
+                Padding="3"
+                VerticalAlignment="Top"
+                Width="140" Grid.Row="1"/>
+        <Button Content="Редактировать марку"
+                Grid.ColumnSpan="2"
+                HorizontalAlignment="Left"
+                Margin="5"
+                Grid.Row="3"
+                VerticalAlignment="Center"
+                MinWidth="125"
+                MinHeight="20"/>
+    </Grid>
+</Window>
