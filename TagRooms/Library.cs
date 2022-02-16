@@ -19,7 +19,16 @@ namespace TagRooms
                 .Cast<Level>()
                 .ToList();
             return levels;
-        }        
+        }
+        public static List<ViewPlan> GetViews(ExternalCommandData commandData)
+        {
+            var doc = commandData.Application.ActiveUIDocument.Document;
+            List<ViewPlan> views = new FilteredElementCollector(doc)
+                .OfClass(typeof(ViewPlan))
+                .OfType<ViewPlan>()                
+                .ToList();
+            return views;
+        }
         public static List<RoomTagType> GetRoomTagTypes(ExternalCommandData commandData)
         {
             FilteredElementCollector filteredElementCollector = new FilteredElementCollector(commandData.Application.ActiveUIDocument.Document);
@@ -28,5 +37,19 @@ namespace TagRooms
             var m_roomTagTypes = filteredElementCollector.Cast<RoomTagType>().ToList();
             return m_roomTagTypes;
         }
+        public static XYZ GetElemCenter(Element element)
+        {
+            BoundingBoxXYZ boxXYZ = element.get_BoundingBox(null);
+            return (boxXYZ.Max + boxXYZ.Min) / 2;
+        }
+        public static List<ElementId> GetRooms(ExternalCommandData commandData)
+        {
+            var doc = commandData.Application.ActiveUIDocument.Document;
+            FilteredElementCollector rooms = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_Rooms);
+            List<ElementId> ids = rooms.ToElementIds() as List<ElementId>;
+            return ids;
+        }
+
     }
 }
