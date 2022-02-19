@@ -21,7 +21,8 @@
         </Grid.ColumnDefinitions>
         <Label Content="Уровень:" Margin="3" Padding="3"/>
         <Label Content="Тип марки:" Margin="3" Padding="3" Grid.Row="1"/>
-        <ComboBox Grid.Column="1" 
+        <ComboBox x:Name="levelsComboBox"
+                  Grid.Column="1"                  
                   ItemsSource="{Binding Levels}"
                   SelectedValue="{Binding SelectedLevels}"
                   DisplayMemberPath="Name"
@@ -29,16 +30,20 @@
         <ComboBox Grid.Column="1"
                   Grid.Row="1"
                   ItemsSource="{Binding TagType}"
-                  SelectedValue="{Binding SelectedTagType}"
+                  SelectedValue="{Binding SelectedTagType}"                  
                   DisplayMemberPath="Name"
-                  Margin="20,5,25,5"/>
-        <ListView Grid.Row="2" 
-                  Grid.ColumnSpan="3"
-                  Margin="5" Name="roomsListView" 
-                  ItemsSource="{Binding RoomList}"
-                  SelectionMode="Single" SelectedItem="{Binding SelectedRoomList}"
-                  DisplayMemberPath="Name"/>
-
+                  Margin="20,5,25,5" />
+        <ListBox x:Name="AllRoomsView"
+                 Grid.Row="2" 
+                 Grid.ColumnSpan="3"
+                 Margin="5"
+                 Padding="5"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 SelectionMode="Single"
+                 DisplayMemberPath="Name"
+                 ItemsSource="{Binding Rooms}"
+                 SelectedValue="{Binding SelectedRooms}"/>
         <Button Grid.Column="2"
                 Grid.Row="3"
                 Content="ОК"               
@@ -70,6 +75,7 @@
                 VerticalAlignment="Top"
                 Width="140" Grid.Row="1"/>
         <Button Content="Редактировать марку"
+                Command="{Binding EditTag}"
                 Grid.ColumnSpan="2"
                 HorizontalAlignment="Left"
                 Margin="5"
@@ -97,7 +103,7 @@
                 VerticalAlignment="Center"
                 Width="75" 
                 Grid.RowSpan="2"
-                Height="58">
+                Height="60">
             <TextBlock 
                 TextAlignment="Center">
                 Aвто<LineBreak/>размещение<LineBreak/>помещений

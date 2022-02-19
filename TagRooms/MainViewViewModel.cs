@@ -14,27 +14,45 @@ namespace TagRooms
     public class MainViewViewModel
     {
         private ExternalCommandData _commandData;
+        private Document _doc;
+
         public List<Level> Levels { get; } = new List<Level>();
         public List<RoomTagType> TagType { get; } = new List<RoomTagType>();
         public DelegateCommand AutoPlaceSpace { get; }
         public DelegateCommand PlaceSpace { get; }
         public DelegateCommand PlaceTagRoom { get; }
+        public DelegateCommand EditTag { get; }
+        public List<Room> Rooms { get; } = new List<Room>();
+
+        private RevitTask revitTask;
+
         public object RoomList { get; }
         public Level SelectedLevels { get; set; }
         public RoomTagType SelectedTagType { get; set; }
+        public List<Room> SelectedRooms { get; set; }
 
 
         public MainViewViewModel(ExternalCommandData commandData)
         {
             _commandData = commandData;
-            Levels = Library.GetLevels(commandData);
-            TagType = Library.GetRoomTagTypes(commandData);
+            _doc = commandData.Application.ActiveUIDocument.Document;
+            Levels = Model.GetLevels(commandData);
+            TagType = Model.GetRoomTagTypes(commandData);
             AutoPlaceSpace = new DelegateCommand(OnAutoPlaceSpace);
             PlaceSpace = new DelegateCommand(OnPlaceSpace);
             PlaceTagRoom = new DelegateCommand(OnPlaceTagRoom);
+            EditTag = new DelegateCommand(OnEditTag);
+            List<Room> roomlist = Model.GetRooms(_doc);
+            Rooms = Model.GetUniqueLevelOfRooms(_doc, roomlist);
+            revitTask = new RevitTask();
         }
 
-        private void OnPlaceSpace()
+        private void OnEditTag()
+        {
+           
+        }
+
+        private async void OnPlaceSpace()
         {
             #region Ручное размещение помещений
 
@@ -44,55 +62,64 @@ namespace TagRooms
             Document doc = uidoc.Document;
             ViewPlan view = doc.ActiveView as ViewPlan;
             Level level = view.GenLevel;
-            List<Room> rooms = new List<Room>();
-            while (true)
+            List<Room> rooms = new List<Room>();            
+            await revitTask.Run(app =>
             {
-                try
+                while (true)
                 {
-                    XYZ xyz = uidoc.Selection.PickPoint("Select a point");
-                    UV uv = new UV(xyz.X, xyz.Y);
-                    using (Transaction ts = new Transaction(doc, "Create Room"))
+                    try
                     {
-                        ts.Start();
-                        Room room = doc.Create.NewRoom(level, uv);                        
-                        rooms.Add(room);
-                        #region
-                        //PlanTopology planTopology = doc.get_PlanTopology(SelectedLevels);
-                        //using (SubTransaction sts = new SubTransaction(doc))
-                        //{
-                        //    sts.Start();
-                        //    foreach (ElementId eid in planTopology.GetRoomIds())
-                        //    {
-                        //        Room tmpRoom = doc.GetElement(eid) as Room;
-                        //        if (doc.GetElement(tmpRoom.LevelId) != null && tmpRoom.Location != null)
-                        //        {
-                        //            LocationPoint locationPoint = tmpRoom.Location as LocationPoint;
-                        //            UV point = new UV(locationPoint.Point.X, locationPoint.Point.Y);
-                        //            RoomTag newTag = doc.Create.NewRoomTag(new LinkElementId(tmpRoom.Id), point, null);
-                        //            newTag.RoomTagType = SelectedTagType;
+                        using (Transaction ts = new Transaction(doc, "Create Room"))
+                        {
+                            ts.Start();
 
-                        //        }
-                        //    }
-                        //    sts.Commit();
-                        #endregion
-                        ts.Commit();
+
+                            XYZ xyz = uidoc.Selection.PickPoint("Select a point");
+                            UV uv = new UV(xyz.X, xyz.Y);
+
+                            Room room = doc.Create.NewRoom(level, uv);
+                            rooms.Add(room);
+                            #region
+                            //PlanTopology planTopology = doc.get_PlanTopology(SelectedLevels);
+                            //using (SubTransaction sts = new SubTransaction(doc))
+                            //{
+                            //    sts.Start();
+                            //    foreach (ElementId eid in planTopology.GetRoomIds())
+                            //    {
+                            //        Room tmpRoom = doc.GetElement(eid) as Room;
+                            //        if (doc.GetElement(tmpRoom.LevelId) != null && tmpRoom.Location != null)
+                            //        {
+                            //            LocationPoint locationPoint = tmpRoom.Location as LocationPoint;
+                            //            UV point = new UV(locationPoint.Point.X, locationPoint.Point.Y);
+                            //            RoomTag newTag = doc.Create.NewRoomTag(new LinkElementId(tmpRoom.Id), point, null);
+                            //            newTag.RoomTagType = SelectedTagType;
+
+                            //        }
+                            //    }
+                            //    sts.Commit();
+                            #endregion
+
+                            ts.Commit();
+                        }
                     }
-                }
-                catch (Autodesk.Revit.Exceptions.OperationCanceledException ex)
-                {
-                    
-                    break;
-                    
-                }
+                    catch (Autodesk.Revit.Exceptions.OperationCanceledException ex)
+                    {
 
-            }
+                        break;
+
+                    }
+
+                };
+            });
             TaskDialog.Show("Revit", "Помещения созданы");
             RaiseShowRequest();
+            
             #endregion
         }
 
-        private void OnPlaceTagRoom()
+        private async void OnPlaceTagRoom()
         {
+            RaiseHideRequest();
             UIDocument uidoc = _commandData.Application.ActiveUIDocument;
             Document doc = uidoc.Document;
             #region
@@ -117,77 +144,89 @@ namespace TagRooms
             //}
             #endregion
             PlanTopology planTopology = doc.get_PlanTopology(SelectedLevels);
-            using (Transaction ts = new Transaction(doc,"jhg"))
-            {
-                ts.Start();
-                ts.GetStatus();
-                foreach (ElementId eid in planTopology.GetRoomIds())
-                {
-                    Room tmpRoom = doc.GetElement(eid) as Room;
-                    if (doc.GetElement(tmpRoom.LevelId) != null && tmpRoom.Location != null)
-                    {
-                        LocationPoint locationPoint = tmpRoom.Location as LocationPoint;
-                        UV point = new UV(locationPoint.Point.X, locationPoint.Point.Y);
-                        RoomTag newTag = doc.Create.NewRoomTag(new LinkElementId(tmpRoom.Id), point, null);
-                        newTag.RoomTagType = SelectedTagType;
 
+            await revitTask.Run(app =>
+            {
+                using (Transaction ts = new Transaction(doc, "jhg"))
+                {
+                    ts.Start();
+                    foreach (ElementId eid in planTopology.GetRoomIds())
+                    {
+                        Room tmpRoom = doc.GetElement(eid) as Room;
+                        if (doc.GetElement(tmpRoom.LevelId) != null && tmpRoom.Location != null)
+                        {
+                            LocationPoint locationPoint = tmpRoom.Location as LocationPoint;
+                            UV point = new UV(locationPoint.Point.X, locationPoint.Point.Y);
+                            RoomTag newTag = doc.Create.NewRoomTag(new LinkElementId(tmpRoom.Id), point, null);
+                            newTag.RoomTagType = SelectedTagType;
+
+                        }
                     }
+                    ts.Commit();
                 }
-                ts.Commit();
-            }
+            });
+            
+            TaskDialog.Show("Revit", "Маркировка создана");
+            RaiseShowRequest();
         }
 
-        private void OnAutoPlaceSpace()
+        private async void OnAutoPlaceSpace()
         {
 
-            #region Автоматическое создание помещений с маркой            
+            #region Автоматическое создание помещений с маркой 
+            RaiseHideRequest();
             UIDocument uidoc = _commandData.Application.ActiveUIDocument;
             Document doc = uidoc.Document;
             List<Room> rooms = new List<Room>();
-            try
-            {
 
-                RaiseOutCloseRequest();
-                if (SelectedLevels != null)
+            await revitTask.Run(app =>
+            {
+                try
                 {
-                    using (Transaction ts = new Transaction(doc, "rooms"))
+
+                    RaiseOutCloseRequest();
+                    if (SelectedLevels != null)
                     {
-                        ts.Start();
-                        PlanTopology pt = doc.get_PlanTopology(SelectedLevels);
-                        foreach (PlanCircuit pc in pt.Circuits)
+                        using (Transaction ts = new Transaction(doc, "rooms"))
                         {
-                            if (!pc.IsRoomLocated)
+                            ts.Start();
+                            PlanTopology pt = doc.get_PlanTopology(SelectedLevels);
+                            foreach (PlanCircuit pc in pt.Circuits)
                             {
-                                Room r = doc.Create.NewRoom(null, pc);
-                                
-                                rooms.Add(r);
+                                if (!pc.IsRoomLocated)
+                                {
+                                    Room r = doc.Create.NewRoom(null, pc);
+
+                                    rooms.Add(r);
+                                }
                             }
-                            //List<RoomTag> roomTags = new FilteredElementCollector(doc)
-                            //    .OfClass(typeof(RoomTag))
-                            //    .OfClass(typeof(Level))
-                            //    .
-                            //    .ToList();
-                            
+                            ts.Commit();
+                            TaskDialog.Show("Revit", "Помещения созданы");
                         }
-                        ts.Commit();
-                        TaskDialog.Show("Revit", "Помещения созданы");
                     }
+                    else
+                    {
+                        TaskDialog.Show("Ошибка", "Не выбран уровень");
 
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    TaskDialog.Show("Ошибка", "Не выбран уровень");
-
+                    throw;
                 }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            RaiseOnCloseRequest();
+                RaiseOnCloseRequest();
+            });           
+            RaiseShowRequest();
             #endregion
         }
         #region EventHandlers
+
+        public event EventHandler RefreshRequest;
+        private void RaiseRefreshRequest()
+        {
+            RefreshRequest?.Invoke(this, EventArgs.Empty);
+        }
+
         //свернуть
         public event EventHandler HideRequest;
         private void RaiseHideRequest()

@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,8 @@ namespace TagRooms
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            var mainView = new MainView(commandData);
-            mainView.ShowDialog();
+            MainView window = new MainView(commandData);           
+            window.ShowDialog();
             return Result.Succeeded;
         }
     }
