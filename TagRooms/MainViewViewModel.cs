@@ -52,26 +52,26 @@ namespace TagRooms
             SaveCommand = new DelegateCommand(OnSaveCommand);
         }
 
-        private async void OnSaveCommand()
+        private void OnSaveCommand()
         {
-            UIApplication uiapp = _commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-            Document doc = uidoc.Document;
-            Element room = SelectedRoom;
-            Name = room.Name;           
-            await revitTask.Run(app =>
-            {
-                using (Transaction ts = new Transaction(doc, "Edit Tag"))
-                {
-                    ts.Start();
-                    Parameter roomName = room.get_Parameter(BuiltInParameter.ROOM_NAME);
-                    Parameter roomNumber = room.get_Parameter(BuiltInParameter.ROOM_NUMBER);
-                    //Parameter roomNumber1 = room.get_Parameter(BuiltInParameter.Tag);
-                    roomName.SetValueString(Name);
-                    roomNumber.Set(Number);
-                    ts.Commit();
-                }
-            });
+            //UIApplication uiapp = _commandData.Application;
+            //UIDocument uidoc = uiapp.ActiveUIDocument;
+            //Document doc = uidoc.Document;
+            //Element room = SelectedRoom;
+            //Name = room.Name;           
+            //await revitTask.Run(app =>
+            //{
+            //    using (Transaction ts = new Transaction(doc, "Edit Tag"))
+            //    {
+            //        ts.Start();                    
+            //        Parameter roomName = room.get_Parameter(BuiltInParameter.ROOM_NAME);
+            //        Parameter roomNumber = room.get_Parameter(BuiltInParameter.ROOM_NUMBER);
+            //        //Parameter roomNumber1 = room.get_Parameter(BuiltInParameter.Tag);
+            //        roomName.SetValueString(Name);
+            //        roomNumber.Set(Number);
+            //        ts.Commit();
+            //    }
+            //});
         }
 
         private async void OnPlaceSpace()
@@ -241,7 +241,7 @@ namespace TagRooms
                                     }
                                 }
                                 ts.Commit();
-                                TaskDialog.Show("Revit", "Помещения созданы");
+                                TaskDialog.Show("Revit", "Помещения созданы");                               
                             }
                         }
                         else
@@ -258,7 +258,7 @@ namespace TagRooms
                 {
                     throw;
                 }
-            });
+            });            
             RaiseShowRequest();
             #endregion
         }

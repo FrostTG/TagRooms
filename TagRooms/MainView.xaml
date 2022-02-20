@@ -130,11 +130,17 @@
                 VerticalAlignment="Center"
                 Width="75" 
                 Grid.RowSpan="2"
-                Height="60">
+                Height="60" >
             <TextBlock 
                 TextAlignment="Center">
                 Aвто<LineBreak/>размещение<LineBreak/>помещений
             </TextBlock>
         </Button>
+        <Button Content="O" Grid.Column="1"
+                HorizontalAlignment="Left" 
+                Margin="229,8,0,0"
+                Grid.Row="7"
+                VerticalAlignment="Top"
+                Width="22" Click="Refresh"/>
     </Grid>
 </Window>
