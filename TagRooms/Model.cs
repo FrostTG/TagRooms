@@ -45,10 +45,11 @@ namespace TagRooms
         public static List<Room> GetRooms(Document doc)
         {
             return new FilteredElementCollector(doc)
-                 .OfCategory(BuiltInCategory.OST_Rooms)
-                 .OfType<Room>()
+                 .OfClass(typeof(SpatialElement))
+                 .OfType<Room>()                 
                  .ToList();
         }
+        
         public static List<Room> GetUniqueLevelOfRooms(Document document, List<Room> roomList)
         {
             List<Room> roomsList = new List<Room>();
@@ -101,6 +102,7 @@ namespace TagRooms
 
             return Tuple.Create(allRoomsList, allRoomLevel);
         }
+        
 
     }  
 }

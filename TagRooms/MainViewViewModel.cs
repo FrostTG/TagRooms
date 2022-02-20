@@ -21,15 +21,18 @@ namespace TagRooms
         public DelegateCommand AutoPlaceSpace { get; }
         public DelegateCommand PlaceSpace { get; }
         public DelegateCommand PlaceTagRoom { get; }
-        public DelegateCommand EditTag { get; }
         public List<Room> Rooms { get; } = new List<Room>();
 
         private RevitTask revitTask;
 
+        public string Name { get; set; }
+        public double Number { get; set; }
+        public DelegateCommand SaveCommand { get; }
         public object RoomList { get; }
         public Level SelectedLevels { get; set; }
         public RoomTagType SelectedTagType { get; set; }
-        public List<Room> SelectedRooms { get; set; }
+        public RoomTagType SelectedEditTagType { get; set; }
+        public Element SelectedRoom { get; set; }
 
 
         public MainViewViewModel(ExternalCommandData commandData)
@@ -41,15 +44,34 @@ namespace TagRooms
             AutoPlaceSpace = new DelegateCommand(OnAutoPlaceSpace);
             PlaceSpace = new DelegateCommand(OnPlaceSpace);
             PlaceTagRoom = new DelegateCommand(OnPlaceTagRoom);
-            EditTag = new DelegateCommand(OnEditTag);
             List<Room> roomlist = Model.GetRooms(_doc);
             Rooms = Model.GetUniqueLevelOfRooms(_doc, roomlist);
             revitTask = new RevitTask();
+            Name = null;
+            Number = 0;
+            SaveCommand = new DelegateCommand(OnSaveCommand);
         }
 
-        private void OnEditTag()
+        private async void OnSaveCommand()
         {
-           
+            UIApplication uiapp = _commandData.Application;
+            UIDocument uidoc = uiapp.ActiveUIDocument;
+            Document doc = uidoc.Document;
+            Element room = SelectedRoom;
+            Name = room.Name;           
+            await revitTask.Run(app =>
+            {
+                using (Transaction ts = new Transaction(doc, "Edit Tag"))
+                {
+                    ts.Start();
+                    Parameter roomName = room.get_Parameter(BuiltInParameter.ROOM_NAME);
+                    Parameter roomNumber = room.get_Parameter(BuiltInParameter.ROOM_NUMBER);
+                    //Parameter roomNumber1 = room.get_Parameter(BuiltInParameter.Tag);
+                    roomName.SetValueString(Name);
+                    roomNumber.Set(Number);
+                    ts.Commit();
+                }
+            });
         }
 
         private async void OnPlaceSpace()
@@ -62,7 +84,7 @@ namespace TagRooms
             Document doc = uidoc.Document;
             ViewPlan view = doc.ActiveView as ViewPlan;
             Level level = view.GenLevel;
-            List<Room> rooms = new List<Room>();            
+            List<Room> rooms = new List<Room>();
             await revitTask.Run(app =>
             {
                 while (true)
@@ -113,7 +135,7 @@ namespace TagRooms
             });
             TaskDialog.Show("Revit", "Помещения созданы");
             RaiseShowRequest();
-            
+
             #endregion
         }
 
@@ -165,7 +187,7 @@ namespace TagRooms
                     ts.Commit();
                 }
             });
-            
+
             TaskDialog.Show("Revit", "Маркировка создана");
             RaiseShowRequest();
         }
@@ -178,44 +200,65 @@ namespace TagRooms
             UIDocument uidoc = _commandData.Application.ActiveUIDocument;
             Document doc = uidoc.Document;
             List<Room> rooms = new List<Room>();
-
+            List<ElementId> roomsIds = new List<ElementId>();
+            List<Room> roomlist = Model.GetRooms(_doc);
+            FilteredElementCollector roomTags = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_RoomTags)
+                .WhereElementIsNotElementType();
+            Element type = SelectedTagType;
             await revitTask.Run(app =>
             {
                 try
                 {
-
                     RaiseOutCloseRequest();
                     if (SelectedLevels != null)
                     {
-                        using (Transaction ts = new Transaction(doc, "rooms"))
+                        if (SelectedTagType != null)
                         {
-                            ts.Start();
-                            PlanTopology pt = doc.get_PlanTopology(SelectedLevels);
-                            foreach (PlanCircuit pc in pt.Circuits)
+                            using (Transaction ts = new Transaction(doc, "rooms"))
                             {
-                                if (!pc.IsRoomLocated)
+                                ts.Start();
+                                foreach (Room room in roomlist)
                                 {
-                                    Room r = doc.Create.NewRoom(null, pc);
-
-                                    rooms.Add(r);
+                                    if (room.Area == 0)
+                                        doc.Delete(room.Id);
                                 }
+                                PlanTopology pt = doc.get_PlanTopology(SelectedLevels);
+                                foreach (PlanCircuit pc in pt.Circuits)
+                                {
+                                    if (!pc.IsRoomLocated)
+                                    {
+                                        Room r = doc.Create.NewRoom(null, pc);
+                                        rooms.Add(r);
+                                        roomsIds.Add(r.Id);
+                                        foreach (RoomTag rt in roomTags)
+                                        {
+                                            if (roomsIds.Contains(rt.TaggedLocalRoomId))
+                                            {
+                                                rt.ChangeTypeId(type.Id);
+                                            }
+                                        }
+                                    }
+                                }
+                                ts.Commit();
+                                TaskDialog.Show("Revit", "Помещения созданы");
                             }
-                            ts.Commit();
-                            TaskDialog.Show("Revit", "Помещения созданы");
+                        }
+                        else
+                        {
+                            TaskDialog.Show("Ошибка", "Не выбран тип марки");
                         }
                     }
                     else
                     {
                         TaskDialog.Show("Ошибка", "Не выбран уровень");
-
                     }
                 }
                 catch (Exception)
                 {
                     throw;
                 }
-                RaiseOnCloseRequest();
-            });           
+            });
             RaiseShowRequest();
             #endregion
         }
