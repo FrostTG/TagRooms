@@ -17,6 +17,8 @@ namespace TagRooms
         private ExternalCommandData _commandData;
         Document _doc;
         private RevitTask revitTask;
+        private string message;
+
         public MainView(ExternalCommandData commandData)
         {
             InitializeComponent();
@@ -42,9 +44,9 @@ namespace TagRooms
         }
         private void EditTagComplete(object sender, SelectionChangedEventArgs args)
         {
-            Room room = AllRoomsView.SelectedItem as Room;
+            Room room = AllRoomsView.SelectedItem as Room;            
             txtName.Text = room.get_Parameter(BuiltInParameter.ROOM_NAME).AsString();
-            txtNumber.Text = room.get_Parameter(BuiltInParameter.ROOM_NUMBER).AsString();
+            txtNumber.Text = room.get_Parameter(BuiltInParameter.ROOM_NUMBER).AsString();           
         }
 
         private void btnEditTag(object sender, RoutedEventArgs e)
@@ -94,17 +96,26 @@ namespace TagRooms
             //Получаем значение текста для нового имени
             string newName = txtName.Text;
             string newNumber = txtNumber.Text;
+            RoomTagType newRoomTag = cmbxTagType.SelectedItem as RoomTagType;
             //получаем помещение
             Room room = AllRoomsView.SelectedItem as Room;
+            RoomTag roomTag = AllRoomsView.SelectedItem as RoomTag;
             //записываем новое имя
-
-            using (Transaction t = new Transaction(_doc))
+            try
             {
-                t.Start("SetName");
-                room.get_Parameter(BuiltInParameter.ROOM_NAME).Set(newName);
-                room.get_Parameter(BuiltInParameter.ROOM_NUMBER).Set(newNumber);
-                t.Commit();
+                using (Transaction t = new Transaction(_doc))
+                {
+                    t.Start("SetName");
+                    room.get_Parameter(BuiltInParameter.ROOM_NAME).Set(newName);
+                    room.get_Parameter(BuiltInParameter.ROOM_NUMBER).Set(newNumber);
+                    roomTag.RoomTagType = newRoomTag;
+                    t.Commit();
+                }
             }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }           
 
             //обновляем UI список
             AllRoomsView.Items.Refresh();

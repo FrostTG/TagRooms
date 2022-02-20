@@ -94,33 +94,10 @@ namespace TagRooms
                         using (Transaction ts = new Transaction(doc, "Create Room"))
                         {
                             ts.Start();
-
-
                             XYZ xyz = uidoc.Selection.PickPoint("Select a point");
                             UV uv = new UV(xyz.X, xyz.Y);
-
                             Room room = doc.Create.NewRoom(level, uv);
-                            rooms.Add(room);
-                            #region
-                            //PlanTopology planTopology = doc.get_PlanTopology(SelectedLevels);
-                            //using (SubTransaction sts = new SubTransaction(doc))
-                            //{
-                            //    sts.Start();
-                            //    foreach (ElementId eid in planTopology.GetRoomIds())
-                            //    {
-                            //        Room tmpRoom = doc.GetElement(eid) as Room;
-                            //        if (doc.GetElement(tmpRoom.LevelId) != null && tmpRoom.Location != null)
-                            //        {
-                            //            LocationPoint locationPoint = tmpRoom.Location as LocationPoint;
-                            //            UV point = new UV(locationPoint.Point.X, locationPoint.Point.Y);
-                            //            RoomTag newTag = doc.Create.NewRoomTag(new LinkElementId(tmpRoom.Id), point, null);
-                            //            newTag.RoomTagType = SelectedTagType;
-
-                            //        }
-                            //    }
-                            //    sts.Commit();
-                            #endregion
-
+                            rooms.Add(room);                           
                             ts.Commit();
                         }
                     }
