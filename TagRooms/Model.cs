@@ -3,6 +3,7 @@ using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,19 +45,21 @@ namespace TagRooms
         }
         public static List<Room> GetRooms(Document doc)
         {
-            return new FilteredElementCollector(doc)
+            List<Room> roomlist = new FilteredElementCollector(doc)
                  .OfClass(typeof(SpatialElement))
-                 .OfType<Room>()                 
+                 .OfType<Room>()
                  .ToList();
+            return roomlist;
         }
-        
-        public static List<Room> GetUniqueLevelOfRooms(Document document, List<Room> roomList)
+
+        public static ObservableCollection<Room> GetUniqueLevelOfRooms(Document document, List<Room> roomList)
         {
-            List<Room> roomsList = new List<Room>();
+            ObservableCollection<Room> roomsList = new ObservableCollection<Room>();
             List<ElementId> RoomIdList = new List<ElementId>();
             foreach (Room room in roomList)
             {
-                RoomIdList.Add(room.Id);
+                if (room.Area != 0)
+                    RoomIdList.Add(room.Id);
             }
             List<ElementId> UniqueRoomlIdList = RoomIdList.Distinct().ToList();
             foreach (ElementId elemid in UniqueRoomlIdList)
@@ -64,8 +67,7 @@ namespace TagRooms
                 if (elemid.IntegerValue > 0)
                     roomsList.Add(document.GetElement(elemid) as Room);
                 continue;
-            }
-
+            }            
             return roomsList;
         }
         public static Tuple<List<Room>, List<Level>> GetAllRooms(Document doc)
@@ -102,7 +104,7 @@ namespace TagRooms
 
             return Tuple.Create(allRoomsList, allRoomLevel);
         }
-        
 
-    }  
+
+    }
 }
